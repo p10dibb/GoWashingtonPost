@@ -9,21 +9,19 @@ import (
 )
 
 type SitemapIndex struct {
-	Locations []Location `xml:"sitemap"`
+	Locations []string `xml:"sitemap,loc"`
 }
-type Location struct {
-	Loc string `xml:"loc"`
-}
-
-func (l Location) String() string {
-	return fmt.Sprintf(l.Loc)
+type News struct {
+	Titles    []string `xml:"url>news>title"`
+	Keywords  []string `xml:"url>news>keywords"`
+	Locations []string `xml:"url>loc"`
 }
 
 func (s SitemapIndex) homepage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<h1>all sites<h1/>")
 
 	for _, Location := range s.Locations {
-		str := strings.Split(Location.String(), "https://www.washingtonpost.com/news-sitemaps/")
+		str := strings.Split(Location, "https://www.washingtonpost.com/news-sitemaps/")
 		str = strings.Split(str[1], ".xml")
 		fmt.Fprintf(w, `<p><a href="%s">%s </a></p>`, Location, str[0])
 	}
@@ -39,12 +37,7 @@ func main() {
 
 	var s SitemapIndex
 
-	xml.Unmarshal(bytes, &s)
-	//fmt.Println(s.Locations)
-
-	/*for _, Location := range s.Locations {
-		fmt.Printf("\n%s", Location)
-	}*/
+	xml.Unmarshal(bytes, &s) // converts from binary to readable
 
 	http.HandleFunc("/", s.homepage)
 	http.ListenAndServe(":8001", nil)
