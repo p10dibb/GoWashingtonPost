@@ -97,7 +97,7 @@ func main() {
 
 		str := strings.Split(Location, "\n") //has a /n at begiinig for some reason
 
-		go getMap(str[1], newsMap)
+		getMap(str[1], newsMap)
 
 		// for k, v := range  {
 		// 	newsMap[k] = v
