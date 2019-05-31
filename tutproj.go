@@ -93,15 +93,10 @@ func main() {
 	xml.Unmarshal(bytes, &s) // converts from binary to readable
 	fmt.Println(3)
 	for _, Location := range s.Locations {
-		//	println(Location)
 
 		str := strings.Split(Location, "\n") //has a /n at begiinig for some reason
 
 		go getMap(str[1], newsMap)
-
-		// for k, v := range  {
-		// 	newsMap[k] = v
-		// }
 
 	}
 
@@ -113,6 +108,5 @@ func main() {
 
 	http.HandleFunc("/", p.newsAggHandler)
 	http.ListenAndServe(":8000", nil)
-	// http.HandleFunc("/", g.homepage)
 
 }
