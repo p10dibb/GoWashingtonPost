@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -23,22 +24,37 @@ type NewsMap struct {
 	Location string
 }
 
-type siteHolder struct {
-	nm  map[string]NewsMap
-	smi SitemapIndex
+// type siteHolder struct {
+// 	nm  map[string]NewsMap
+// 	smi SitemapIndex
+// }
+type newsAggPage struct {
+	Title string
+	News  string
 }
 
-func (s siteHolder) homepage(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(3)
-	fmt.Fprintf(w, "<h1>all sites<h1/>")
+// type sitePage struct{
+// 	Topics map[string]News
+// }
 
-	for _, Location := range s.smi.Locations {
+// func (s siteHolder) homepage(w http.ResponseWriter, r *http.Request) {
+// 	fmt.Println(3)
+// 	fmt.Fprintf(w, "<h1>all sites<h1/>")
 
-		str := strings.Split(Location, "https://www.washingtonpost.com/news-sitemaps/")
-		str = strings.Split(str[1], ".xml")
-		fmt.Fprintf(w, `<p><a href="%s">%s </a></p>`, Location, str[0])
-	}
-	fmt.Println(4)
+// 	for _, Location := range s.smi.Locations {
+
+// 		str := strings.Split(Location, "https://www.washingtonpost.com/news-sitemaps/")
+// 		str = strings.Split(str[1], ".xml")
+// 		fmt.Fprintf(w, `<p><a href="%s">%s </a></p>`, Location, str[0])
+// 	}
+// 	fmt.Println(4)
+// }
+
+func newsAggHandler(w http.ResponseWriter, r *http.Request) {
+	p := newsAggPage{Title: "News stuff", News: " stuff stuff"}
+	t, _ := template.ParseFiles("baseTemplate.html")
+	t.Execute(w, p)
+
 }
 
 func main() {
@@ -46,21 +62,19 @@ func main() {
 	var n News
 	newsMap := make(map[string]NewsMap)
 
-	var g siteHolder
+	//var sp sitePage
 
 	resp, _ := http.Get("https://www.washingtonpost.com/news-sitemaps/index.xml") //gets all
 
 	bytes, _ := ioutil.ReadAll(resp.Body) //parses all into better format
 
-	//resp.Body.Close() // closes since we got it all
-
 	xml.Unmarshal(bytes, &s) // converts from binary to readable
 	fmt.Println(1)
 	for _, Location := range s.Locations {
-		str := strings.Split(Location, "\n")
-		//fmt.Printf("%s", str[1])
+		str := strings.Split(Location, "\n") //has a /n at begiinig for some reason
+
 		resp, _ := http.Get(str[1])
-		//gets all
+
 		bytes, _ := ioutil.ReadAll(resp.Body) //parses all into better format
 		//resp1.Body.Close()                      // closes since we got it all
 		xml.Unmarshal(bytes, &n)
@@ -70,17 +84,9 @@ func main() {
 
 	}
 	fmt.Println(2)
-	/*
-		for idx, data := range newsMap {
-			fmt.Println("\n\n\n", idx)
-			fmt.Println("\n", data.keywords)
-			fmt.Println("\n", data.Location)
 
-		}*/
-
-	g.nm = newsMap
-	g.smi = s
-	http.HandleFunc("/", g.homepage)
+	// http.HandleFunc("/", g.homepage)
+	http.HandleFunc("/agg/", newsAggHandler)
 	http.ListenAndServe(":8000", nil)
 
 }
