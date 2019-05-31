@@ -7,7 +7,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 )
+
+var wg sync.WaitGroup
 
 type SitemapIndex struct {
 	Locations []string `xml:"sitemap>loc"`
@@ -52,15 +56,35 @@ type sitePage struct {
 // 	fmt.Println(4)
 // }
 
-func newsAggHandler(w http.ResponseWriter, r *http.Request) {
+func (p newsAggPage) newsAggHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(5)
+	t, _ := template.ParseFiles("baseTemplate.html")
+	t.Execute(w, p)
+	fmt.Println(6)
+
+}
+
+func getMap(s string, nm map[string]NewsMap) {
+	var n News
+	//newsMap := make(map[string]NewsMap)
+	resp, _ := http.Get(s)
+	bytes, _ := ioutil.ReadAll(resp.Body)
+	xml.Unmarshal(bytes, &n)
+	for idx, _ := range n.Titles {
+		nm[n.Titles[idx]] = NewsMap{n.Keywords[idx], n.Locations[idx]}
+	}
+
+}
+
+func main() {
+
+	start := time.Now()
+
+	fmt.Println(1)
 	fmt.Println(2)
 	var s SitemapIndex
-	var n News
 
-	var sp sitePage
-	sp.Title = "washington post"
-
-	//var sp sitePage
+	newsMap := make(map[string]NewsMap)
 
 	resp, _ := http.Get("https://www.washingtonpost.com/news-sitemaps/index.xml") //gets all
 
@@ -69,56 +93,25 @@ func newsAggHandler(w http.ResponseWriter, r *http.Request) {
 	xml.Unmarshal(bytes, &s) // converts from binary to readable
 	fmt.Println(3)
 	for _, Location := range s.Locations {
-		//println(Location)
-		newsMap := make(map[string]NewsMap)
+		//	println(Location)
 
 		str := strings.Split(Location, "\n") //has a /n at begiinig for some reason
 
-		resp, _ := http.Get(str[1])
-		str = strings.Split(str[1], "https://www.washingtonpost.com/news-sitemaps/")
-		str = strings.Split(str[1], ".xml")
+		go getMap(str[1], newsMap)
 
-		bytes, _ := ioutil.ReadAll(resp.Body) //parses all into better format
-		//resp1.Body.Close()                      // closes since we got it all
-		xml.Unmarshal(bytes, &n)
-		for idx, _ := range n.Titles {
-			newsMap[n.Titles[idx]] = NewsMap{n.Keywords[idx], n.Locations[idx]}
-		}
-
-		// for key, value := range newsMap {
-		// 	println(key)
-		// 	value = value
+		// for k, v := range  {
+		// 	newsMap[k] = v
 		// }
 
-		str = strings.Split(str[1], "https://www.washingtonpost.com/news-sitemaps/")
-		str = strings.Split(str[1], ".xml")
-
-		var p newsAggPage
-		p.Title = str[0]
-
-		for key, value := range newsMap {
-			p.News[key] = value
-			delete(newsMap, key)
-		}
-		sp.Topics = append(sp.Topics, p)
-		// for key, val := range newsMap {
-		// 	val = val
-		// 	delete(newsMap, key)
-		// }
 	}
-	fmt.Println(5)
 
-	//p := newsAggPage{Title: "News stuff", News: newsMap}
-	t, _ := template.ParseFiles("upTemp.html")
-	t.Execute(w, sp)
-	fmt.Println(6)
+	fmt.Println(4)
 
-}
+	p := newsAggPage{Title: "News stuff", News: newsMap}
+	elapsed := time.Since(start)
+	println("Binomial took %s", elapsed)
 
-func main() {
-
-	fmt.Println(1)
-	http.HandleFunc("/", newsAggHandler)
+	http.HandleFunc("/", p.newsAggHandler)
 	http.ListenAndServe(":8000", nil)
 	// http.HandleFunc("/", g.homepage)
 
