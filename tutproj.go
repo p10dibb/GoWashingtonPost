@@ -34,6 +34,7 @@ type NewsMap struct {
 // }
 type newsAggPage struct {
 	Title string
+	Time  string
 	News  map[string]NewsMap
 }
 
@@ -102,11 +103,13 @@ func main() {
 
 	fmt.Println(4)
 
-	p := newsAggPage{Title: "News stuff", News: newsMap}
+	p := newsAggPage{Title: "News stuff", News: newsMap, Time: time.Now().String()}
 	elapsed := time.Since(start)
 	println("Binomial took %s", elapsed)
 
 	http.HandleFunc("/", p.newsAggHandler)
-	http.ListenAndServe(":8000", nil)
+
+	http.ListenAndServe(":8000", nil) //not sure what this does
+	println(7)
 
 }
