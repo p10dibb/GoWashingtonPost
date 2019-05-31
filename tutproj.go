@@ -77,6 +77,7 @@ func getMap(s string, nm map[string]NewsMap) {
 
 }
 
+//commenr
 func main() {
 
 	start := time.Now()
