@@ -1,0 +1,25 @@
+<h1>{{.Title}}</h1>
+<body>
+    <table>
+        {{range  $value := .Topics}}
+        <tHead>  
+            <th>{{$value.Title}}</th> 
+            <th>Keywords</th>
+        </tHead>
+        <tbody>
+                {{ range $key, $value := $value.News}}
+                <tr>
+                        <td><a href="{{$value.Location}}" target="_blank">{{ $key }}</a></td>
+                            <td>{{$value.Keywords}}</td>
+                </tr>
+        
+                {{ end }}
+               
+            </tbody>
+
+
+
+
+        {{end}}
+    </table>
+</body>

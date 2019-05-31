@@ -20,7 +20,7 @@ type News struct {
 }
 
 type NewsMap struct {
-	keywords string
+	Keywords string
 	Location string
 }
 
@@ -30,12 +30,14 @@ type NewsMap struct {
 // }
 type newsAggPage struct {
 	Title string
-	News  string
+	News  map[string]NewsMap
 }
 
-// type sitePage struct{
-// 	Topics map[string]News
-// }
+type sitePage struct {
+	Title string
+
+	Topics []newsAggPage
+}
 
 // func (s siteHolder) homepage(w http.ResponseWriter, r *http.Request) {
 // 	fmt.Println(3)
@@ -51,16 +53,12 @@ type newsAggPage struct {
 // }
 
 func newsAggHandler(w http.ResponseWriter, r *http.Request) {
-	p := newsAggPage{Title: "News stuff", News: " stuff stuff"}
-	t, _ := template.ParseFiles("baseTemplate.html")
-	t.Execute(w, p)
-
-}
-
-func main() {
+	fmt.Println(2)
 	var s SitemapIndex
 	var n News
-	newsMap := make(map[string]NewsMap)
+
+	var sp sitePage
+	sp.Title = "washington post"
 
 	//var sp sitePage
 
@@ -69,11 +67,16 @@ func main() {
 	bytes, _ := ioutil.ReadAll(resp.Body) //parses all into better format
 
 	xml.Unmarshal(bytes, &s) // converts from binary to readable
-	fmt.Println(1)
+	fmt.Println(3)
 	for _, Location := range s.Locations {
+		//println(Location)
+		newsMap := make(map[string]NewsMap)
+
 		str := strings.Split(Location, "\n") //has a /n at begiinig for some reason
 
 		resp, _ := http.Get(str[1])
+		str = strings.Split(str[1], "https://www.washingtonpost.com/news-sitemaps/")
+		str = strings.Split(str[1], ".xml")
 
 		bytes, _ := ioutil.ReadAll(resp.Body) //parses all into better format
 		//resp1.Body.Close()                      // closes since we got it all
@@ -82,11 +85,41 @@ func main() {
 			newsMap[n.Titles[idx]] = NewsMap{n.Keywords[idx], n.Locations[idx]}
 		}
 
-	}
-	fmt.Println(2)
+		// for key, value := range newsMap {
+		// 	println(key)
+		// 	value = value
+		// }
 
-	// http.HandleFunc("/", g.homepage)
-	http.HandleFunc("/agg/", newsAggHandler)
+		str = strings.Split(str[1], "https://www.washingtonpost.com/news-sitemaps/")
+		str = strings.Split(str[1], ".xml")
+
+		var p newsAggPage
+		p.Title = str[0]
+
+		for key, value := range newsMap {
+			p.News[key] = value
+			delete(newsMap, key)
+		}
+		sp.Topics = append(sp.Topics, p)
+		// for key, val := range newsMap {
+		// 	val = val
+		// 	delete(newsMap, key)
+		// }
+	}
+	fmt.Println(5)
+
+	//p := newsAggPage{Title: "News stuff", News: newsMap}
+	t, _ := template.ParseFiles("upTemp.html")
+	t.Execute(w, sp)
+	fmt.Println(6)
+
+}
+
+func main() {
+
+	fmt.Println(1)
+	http.HandleFunc("/", newsAggHandler)
 	http.ListenAndServe(":8000", nil)
+	// http.HandleFunc("/", g.homepage)
 
 }
